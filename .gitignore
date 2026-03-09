@@ -1,0 +1,6 @@
+vectorstore_cache/
+greenmind_session.log
+session.log
+.env
+__pycache__/
+*.pyc
