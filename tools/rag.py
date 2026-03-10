@@ -184,7 +184,7 @@ def build_both_vectorstores(txt_file_1, txt_file_2):
         )
         vectordb_1 = FAISS.load_local(cache_path_1, embeddings, allow_dangerous_deserialization=True)
         vectordb_2 = FAISS.load_local(cache_path_2, embeddings, allow_dangerous_deserialization=True)
-        st.success("🌿 Hi, how can I help you?")
+        #st.success("🌿 Hi, how can I help you?")
         return vectordb_1, vectordb_2
 
     # Fallback
@@ -196,5 +196,5 @@ def build_both_vectorstores(txt_file_1, txt_file_2):
     urls_2     = load_urls_from_file(txt_file_2)
     vectordb_1 = build_vectorstore_from_urls(urls_1, "Environmental_Policies")
     vectordb_2 = build_vectorstore_from_urls(urls_2, "Environmental_Effects")
-    st.success("🌿 Hi, how can I help you?")
+    #st.success("🌿 Hi, how can I help you?")
     return vectordb_1, vectordb_2
