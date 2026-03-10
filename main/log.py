@@ -2,7 +2,10 @@ import os
 import re
 import atexit
 from datetime import datetime
-from langchain_core.callbacks.base import BaseCallbackHandler
+try:
+    from langchain_core.callbacks.base import BaseCallbackHandler
+except ImportError:
+    BaseCallbackHandler = object  # ← fallback to plain object
 
 # ─────────────────────────────────────────────
 # Constants
