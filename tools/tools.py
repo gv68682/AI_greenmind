@@ -1,10 +1,14 @@
 import requests
 import streamlit as st
-from ddgs import DDGS
+
 from langchain.tools import tool
 from langchain_core.tools import StructuredTool
 from langchain_community.vectorstores import FAISS
 from pydantic import BaseModel, Field
+try:
+    from ddgs import DDGS
+except ImportError:
+    from duckduckgo_search import DDGS
 
 
 # Schema for air quality tool
