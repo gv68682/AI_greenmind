@@ -179,7 +179,7 @@ if prompt := st.chat_input("Ask GreenMind about the environment..."):
             for attempt in range(1, MAX_RETRIES + 1):
                 from langchain_core.messages import ToolMessage
                 result = agent_executor.invoke(
-                    {"messages": [("user", prompt)]},
+                    {"messages": [("user", full_prompt)]},
                     config={
                         "recursion_limit": 25,
                         "callbacks": [callback_handler]

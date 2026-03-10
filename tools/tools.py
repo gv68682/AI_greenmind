@@ -50,7 +50,7 @@ def build_tools(vectordb_1, vectordb_2):
     # RAG Tool 1
     # ─────────────────────────────────────────
     def _rag_policies(query: str) -> str:
-        results = vectordb_2.similarity_search(query, k=4)
+        results = vectordb_1.similarity_search(query, k=8)
         if not results:
             return "No relevant information found in environmental policy documents."
         context = "\n\n".join([doc.page_content for doc in results])
@@ -73,7 +73,7 @@ def build_tools(vectordb_1, vectordb_2):
     # RAG Tool 2
     # ─────────────────────────────────────────
     def _rag_effects(query: str) -> str:
-        results = vectordb_1.similarity_search(query, k=4)
+        results = vectordb_2.similarity_search(query, k=8)
 
         # ✅ debug prints here — inside the function
         print(f"DEBUG RAG EFFECTS — query    : {query}")

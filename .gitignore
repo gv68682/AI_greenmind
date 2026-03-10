@@ -2,5 +2,6 @@ greenmind_session.log
 run_once.py
 session.log
 .env
+.devcontainer
 __pycache__/
 *.pyc

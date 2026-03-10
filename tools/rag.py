@@ -1,4 +1,5 @@
 import os
+import time
 import requests
 import streamlit as st
 import sys
@@ -11,7 +12,7 @@ print(f"DEBUG — Checking langchain_community...")
 
 try:
     from langchain_community.vectorstores import FAISS
-    from langchain_community.embeddings import HuggingFaceEmbeddings
+    from langchain_huggingface import HuggingFaceEmbeddings
     from langchain_community.document_loaders import PyPDFLoader
     from langchain_text_splitters import RecursiveCharacterTextSplitter
     LANGCHAIN_AVAILABLE = True
@@ -113,8 +114,8 @@ def load_pdf_chunks(pdf_url: str, temp_filename: str = "temp.pdf"):
             os.remove(temp_filename)
 
     splitter = RecursiveCharacterTextSplitter(
-        chunk_size=1000,
-        chunk_overlap=100,
+       chunk_size=2000,
+        chunk_overlap=200,
     )
 
     return splitter.split_documents(docs)
@@ -127,7 +128,8 @@ def build_vectorstore_from_urls(urls: list[str], store_name: str):
     # st.write(f"📚 Building vector store: **[{store_name}]** — {len(urls)} PDFs...")
 
     embeddings = HuggingFaceEmbeddings(
-        model_name="sentence-transformers/multi-qa-MiniLM-L6-cos-v1"
+        model_name="sentence-transformers/all-mpnet-base-v2"
+        #model_name="sentence-transformers/multi-qa-MiniLM-L6-cos-v1"
     )
     all_documents = []
 
@@ -180,7 +182,8 @@ def build_both_vectorstores(txt_file_1, txt_file_2):
         from langchain_community.vectorstores import FAISS
         from langchain_community.embeddings import HuggingFaceEmbeddings
         embeddings = HuggingFaceEmbeddings(
-            model_name="sentence-transformers/multi-qa-MiniLM-L6-cos-v1"
+            model_name="sentence-transformers/all-mpnet-base-v2"
+            #model_name="sentence-transformers/multi-qa-MiniLM-L6-cos-v1"
         )
         vectordb_1 = FAISS.load_local(cache_path_1, embeddings, allow_dangerous_deserialization=True)
         vectordb_2 = FAISS.load_local(cache_path_2, embeddings, allow_dangerous_deserialization=True)
