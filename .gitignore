@@ -5,3 +5,4 @@ session.log
 .devcontainer
 __pycache__/
 *.pyc
+test_geo.py

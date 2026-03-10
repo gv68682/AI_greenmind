@@ -1,6 +1,6 @@
 import requests
 import streamlit as st
-
+import unicodedata
 
 
 def build_tools(vectordb_1, vectordb_2):
@@ -231,7 +231,7 @@ def build_tools(vectordb_1, vectordb_2):
     # Climate Projection Tool
     # ─────────────────────────────────────────
     def _climate(location: str) -> str:
-        
+
         def fetch_climate(lat, lon):
             url = "https://climate-api.open-meteo.com/v1/climate"
             params = {
@@ -255,14 +255,45 @@ def build_tools(vectordb_1, vectordb_2):
         daily = res.get("daily", {})
         times = daily.get("time", [])
 
-        # If no data returned, retry with capital city
-        if not times:
-            print(f"DEBUG CLIMATE — No data for '{location}', retrying with capital...")
+        # If no data, find capital via search and retry
+        if not times or res.get("error"):
+            print(f"DEBUG CLIMATE — No data for '{location}', searching for capital...")
             try:
-                lat, lon = get_coordinates(f"capital of {location}")
-                res   = fetch_climate(lat, lon)
-                daily = res.get("daily", {})
-                times = daily.get("time", [])
+                from ddgs import DDGS
+                capital = None
+                with DDGS() as ddgs:
+                    results = list(ddgs.text(f"what is the capital city of {location}", max_results=3))
+                    for r in results:
+                        snippet = r.get("body", "")
+                        title   = r.get("title", "")
+                        print(f"DEBUG CLIMATE — title  : {title}")
+                        print(f"DEBUG CLIMATE — snippet: {snippet[:150]}")
+                        # Extract capital from title like "Brasilia - Capital of Brazil"
+                        if "capital" in title.lower() or "capital" in snippet.lower():
+                            # Take first word of title as capital candidate
+                            capital = title.split()[0].strip("–—-,")
+                            print(f"DEBUG CLIMATE — capital candidate: {capital}")
+                            break
+
+                def remove_accents(text: str) -> str:
+                    return ''.join(
+                        c for c in unicodedata.normalize('NFD', text)
+                        if unicodedata.category(c) != 'Mn'
+                    )
+
+                if capital:
+                    try:
+                        capital_clean = remove_accents(capital)
+                        print(f"DEBUG CLIMATE — capital clean: {capital_clean}")
+                        lat, lon = get_coordinates(capital_clean)
+                        res   = fetch_climate(lat, lon)
+                        daily = res.get("daily", {})
+                        times = daily.get("time", [])
+                        if times:
+                            print(f"DEBUG CLIMATE — Success with capital: {capital_clean}")
+                    except Exception as e:
+                        print(f"DEBUG CLIMATE — Capital geocoding failed: {e}")
+
             except Exception as e:
                 print(f"DEBUG CLIMATE — Retry failed: {e}")
                 return f"❌ No climate projection data available for {location}"
@@ -293,7 +324,6 @@ def build_tools(vectordb_1, vectordb_2):
             result += f"📅 {year}: Max {data['temp_max']}°C | Min {data['temp_min']}°C | Precip {data['precip']}mm\n"
 
         return result
-
 
     climate_projection_tool = StructuredTool.from_function(
         func=_climate,
