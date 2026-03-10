@@ -1,7 +1,5 @@
 import requests
 import streamlit as st
-from langchain_core.tools import StructuredTool
-from langchain_community.vectorstores import FAISS
 from pydantic import BaseModel, Field
 try:
     from ddgs import DDGS
@@ -43,7 +41,8 @@ class RAGInput(BaseModel):
 
 
 def build_tools(vectordb_1: FAISS, vectordb_2: FAISS):
-
+    from langchain_core.tools import StructuredTool        # ← move here
+    from langchain_community.vectorstores import FAISS
     def get_coordinates(location: str) -> tuple[float, float]:
         """Convert any location name to latitude/longitude."""
         url = "https://geocoding-api.open-meteo.com/v1/search"
