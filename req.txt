@@ -4,10 +4,11 @@ langchain-google-genai
 langchain-community
 langchain-core
 langchain-text-splitters
-faiss-cpu==1.7.4
+faiss-cpu
 sentence-transformers
 requests
-duckduckgo_search
+duckduckgo-search
 pypdf
 python-dotenv
-pydantic>=2.0
+pydantic
+langgraph
