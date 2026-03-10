@@ -231,39 +231,48 @@ def build_tools(vectordb_1, vectordb_2):
     # Climate Projection Tool
     # ─────────────────────────────────────────
     def _climate(location: str) -> str:
- 
-        lat, lon = get_coordinates(location)
-        url = "https://climate-api.open-meteo.com/v1/climate"
-        params = {
-            "latitude":   lat,
-            "longitude":  lon,
-            "start_date": "2024-01-01",
-            "end_date":   "2050-12-31",
-            "models":     "CMIP6",
-            "daily":      ["temperature_2m_max", "temperature_2m_min",
-                        "precipitation_sum"]
-        }
-        res   = requests.get(url, params=params).json()
+        
+        def fetch_climate(lat, lon):
+            url = "https://climate-api.open-meteo.com/v1/climate"
+            params = {
+                "latitude":   lat,
+                "longitude":  lon,
+                "start_date": "2024-01-01",
+                "end_date":   "2050-12-31",
+                "models":     "CMIP6",
+                "daily":      ["temperature_2m_max", "temperature_2m_min",
+                            "precipitation_sum"]
+            }
+            return requests.get(url, params=params).json()
 
-        # ─────────────────────────────────────────
-        # DEBUG — check what API returns
-        # ─────────────────────────────────────────
-        print("DEBUG CLIMATE — keys    :", res.keys())
-        print("DEBUG CLIMATE — daily   :", list(res.get("daily", {}).keys()))
-        print("DEBUG CLIMATE — times   :", res.get("daily", {}).get("time", [])[:3])
-        print("DEBUG CLIMATE — temp_max:", res.get("daily", {}).get("temperature_2m_max", [])[:3])
+        # First attempt with original location
+        try:
+            lat, lon = get_coordinates(location)
+        except ValueError:
+            return f"❌ Location '{location}' not found."
 
-        daily    = res.get("daily", {})
-        times    = daily.get("time", [])
+        res   = fetch_climate(lat, lon)
+        daily = res.get("daily", {})
+        times = daily.get("time", [])
+
+        # If no data returned, retry with capital city
+        if not times:
+            print(f"DEBUG CLIMATE — No data for '{location}', retrying with capital...")
+            try:
+                lat, lon = get_coordinates(f"capital of {location}")
+                res   = fetch_climate(lat, lon)
+                daily = res.get("daily", {})
+                times = daily.get("time", [])
+            except Exception as e:
+                print(f"DEBUG CLIMATE — Retry failed: {e}")
+                return f"❌ No climate projection data available for {location}"
+
+        if not times:
+            return f"❌ No climate projection data available for {location}"
+
         temp_max = daily.get("temperature_2m_max", [])
         temp_min = daily.get("temperature_2m_min", [])
         precip   = daily.get("precipitation_sum",  [])
-
-        # ─────────────────────────────────────────
-        # Check if data actually returned
-        # ─────────────────────────────────────────
-        if not times:
-            return f"❌ No climate projection data returned for {location}"
 
         snapshots = {}
         for year in [2025, 2030, 2040, 2050]:
