@@ -120,7 +120,7 @@ def load_pdf_chunks(pdf_url: str, temp_filename: str = "temp.pdf"):
 # ─────────────────────────────────────────────
 # 3. Build ONE vectorstore from a list of URLs
 # ─────────────────────────────────────────────
-def build_vectorstore_from_urls(urls: list[str], store_name: str) -> FAISS:
+def build_vectorstore_from_urls(urls: list[str], store_name: str):
 
     # st.write(f"📚 Building vector store: **[{store_name}]** — {len(urls)} PDFs...")
 
