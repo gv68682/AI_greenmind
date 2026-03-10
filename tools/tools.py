@@ -3,7 +3,7 @@ import streamlit as st
 
 
 
-def build_tools(vectordb_1: FAISS, vectordb_2: FAISS):
+def build_tools(vectordb_1, vectordb_2):
     from langchain_core.tools import StructuredTool        # ← move here
     from langchain_community.vectorstores import FAISS
     from pydantic import BaseModel, Field
