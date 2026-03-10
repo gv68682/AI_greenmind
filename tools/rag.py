@@ -167,6 +167,12 @@ def build_both_vectorstores(txt_file_1, txt_file_2):
     cache_path_1 = os.path.join(BASE_DIR, "vectorstore_cache", "Environmental_Policies")
     cache_path_2 = os.path.join(BASE_DIR, "vectorstore_cache", "Environmental_Effects")
 
+    # ✅ Debug — see what path Streamlit is looking at
+    print(f"DEBUG — BASE_DIR     : {BASE_DIR}")
+    print(f"DEBUG — cache_path_1 : {cache_path_1}")
+    print(f"DEBUG — exists_1     : {os.path.exists(cache_path_1)}")
+    print(f"DEBUG — exists_2     : {os.path.exists(cache_path_2)}")
+
     # ✅ Load from cache — no langchain_community needed at import time
     if os.path.exists(cache_path_1) and os.path.exists(cache_path_2):
         from langchain_community.vectorstores import FAISS
