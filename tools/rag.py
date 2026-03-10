@@ -148,23 +148,33 @@ def build_vectorstore_from_urls(urls: list[str], store_name: str) -> FAISS:
 # 4. Build BOTH vectorstores — Streamlit cached
 # ─────────────────────────────────────────────
 @st.cache_resource
-def build_both_vectorstores(
-    txt_file_1: str,
-    txt_file_2: str
-) -> tuple[FAISS, FAISS]:
+def build_both_vectorstores(txt_file_1, txt_file_2):
 
+    cache_path_1 = "vectorstore_cache/Environmental_Policies"
+    cache_path_2 = "vectorstore_cache/Environmental_Effects"
+
+    embeddings = HuggingFaceEmbeddings(
+        model_name="sentence-transformers/multi-qa-MiniLM-L6-cos-v1"
+    )
+
+    # ✅ Load from cache if exists — instant
+    if os.path.exists(cache_path_1) and os.path.exists(cache_path_2):
+        vectordb_1 = FAISS.load_local(
+            cache_path_1, embeddings,
+            allow_dangerous_deserialization=True
+        )
+        vectordb_2 = FAISS.load_local(
+            cache_path_2, embeddings,
+            allow_dangerous_deserialization=True
+        )
+        st.success("🌿 GreenMind is ready!")
+        return vectordb_1, vectordb_2
+
+    # Fallback — build from scratch if cache missing
     urls_1 = load_urls_from_file(txt_file_1)
     urls_2 = load_urls_from_file(txt_file_2)
+    vectordb_1 = build_vectorstore_from_urls(urls_1, "Environmental_Policies")
+    vectordb_2 = build_vectorstore_from_urls(urls_2, "Environmental_Effects")
 
-    #with st.status("🌿 GreenMind is loading knowledge base...", expanded=False):
-    vectordb_1 = build_vectorstore_from_urls(urls_1, store_name="Environmental_Policies")
-    vectordb_2 = build_vectorstore_from_urls(urls_2, store_name="Environmental_Effects")
-
-    for tmp in ["temp_Environmental_Policies.pdf", "temp_Environmental_Effects.pdf"]:
-        if os.path.exists(tmp):
-            os.remove(tmp)
-
-    # ✅ Show only once — after BOTH vectorstores are ready
-    #st.success("🌿 Hi, how can I help you?")
-
+    st.success("🌿 GreenMind is ready!")
     return vectordb_1, vectordb_2
