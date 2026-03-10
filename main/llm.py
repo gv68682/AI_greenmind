@@ -3,11 +3,11 @@
 # ─────────────────────────────────────────────
 import os
 import streamlit as st
-from langchain_google_genai import ChatGoogleGenerativeAI
 from main.config import GOOGLE_API_KEY
 
 @st.cache_resource
 def build_llm():
+    from langchain_google_genai import ChatGoogleGenerativeAI
     os.environ["GOOGLE_API_KEY"] = GOOGLE_API_KEY
 
     llm = ChatGoogleGenerativeAI(
