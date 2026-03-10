@@ -4,13 +4,10 @@ langchain-google-genai
 langchain-community
 langchain-core
 langchain-text-splitters
-faiss-cpu
+faiss-cpu==1.7.4
 sentence-transformers
 requests
 ddgs
 pypdf
 python-dotenv
 pydantic
-torch
-transformers
-huggingface-hub
