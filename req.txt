@@ -7,6 +7,6 @@ langchain-text-splitters
 faiss-cpu
 sentence-transformers
 requests
-duckduckgo-search
+ddgs
 pypdf
 python-dotenv

@@ -1,5 +1,5 @@
-vectorstore_cache/
 greenmind_session.log
+run_once.py
 session.log
 .env
 __pycache__/
