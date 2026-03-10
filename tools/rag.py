@@ -1,11 +1,22 @@
 import os
 import time
+import shutil
+import atexit
 import requests
 import streamlit as st
-from langchain_community.document_loaders import PyPDFLoader
-from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_community.vectorstores import FAISS
+from langchain_community.embeddings import HuggingFaceEmbeddings
+
+# ─────────────────────────────────────────────
+# Optional imports — only needed when building
+# vectorstore from scratch (not on Streamlit Cloud)
+# ─────────────────────────────────────────────
+try:
+    from langchain_community.document_loaders import PyPDFLoader
+    from langchain_text_splitters import RecursiveCharacterTextSplitter
+    PDF_LOADING_AVAILABLE = True
+except ImportError:
+    PDF_LOADING_AVAILABLE = False
 
 
 # ─────────────────────────────────────────────
@@ -77,6 +88,9 @@ def download_pdf_with_retry(
 
 
 def load_pdf_chunks(pdf_url: str, temp_filename: str = "temp.pdf"):
+    if not PDF_LOADING_AVAILABLE:
+        raise RuntimeError("PDF loading not available in this environment.")
+
     success = download_pdf_with_retry(pdf_url, temp_filename)
 
     if not success:
@@ -102,7 +116,6 @@ def load_pdf_chunks(pdf_url: str, temp_filename: str = "temp.pdf"):
     )
 
     return splitter.split_documents(docs)
-
 
 # ─────────────────────────────────────────────
 # 3. Build ONE vectorstore from a list of URLs
