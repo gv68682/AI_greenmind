@@ -18,7 +18,6 @@ from main.llm import build_llm
 from main.agent import build_agent
 from tools.prompts import system_prompt_text
 from main.log import log_interaction, GreenMindCallbackHandler
-from langchain_core.messages import ToolMessage
 
 # ─────────────────────────────────────────────
 # 1. Page Config
@@ -178,7 +177,7 @@ if prompt := st.chat_input("Ask GreenMind about the environment..."):
             response    = None
 
             for attempt in range(1, MAX_RETRIES + 1):
-
+                from langchain_core.messages import ToolMessage
                 result = agent_executor.invoke(
                     {"messages": [("user", prompt)]},
                     config={
