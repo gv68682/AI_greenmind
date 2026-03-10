@@ -1,22 +1,23 @@
-import os
-import time
-import shutil
-import atexit
 import requests
 import streamlit as st
+import sys
 
 # ─────────────────────────────────────────────
-# Optional imports — only needed when building
-# vectorstore from scratch (not on Streamlit Cloud)
+# Debug — check what's installed
 # ─────────────────────────────────────────────
+print(f"DEBUG — Python version: {sys.version}")
+print(f"DEBUG — Checking langchain_community...")
+
 try:
     from langchain_community.vectorstores import FAISS
     from langchain_community.embeddings import HuggingFaceEmbeddings
     from langchain_community.document_loaders import PyPDFLoader
     from langchain_text_splitters import RecursiveCharacterTextSplitter
     LANGCHAIN_AVAILABLE = True
-except ImportError:
+    print("DEBUG — langchain_community: AVAILABLE ✅")
+except ImportError as e:
     LANGCHAIN_AVAILABLE = False
+    print(f"DEBUG — langchain_community: FAILED ❌ {e}")
 
 
 # ─────────────────────────────────────────────
