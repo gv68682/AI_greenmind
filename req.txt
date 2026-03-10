@@ -1,7 +1,7 @@
 streamlit
 langchain
 langchain-google-genai
-langchain-community
+langchain-community==0.3.14
 langchain-core
 langchain-text-splitters
 faiss-cpu
