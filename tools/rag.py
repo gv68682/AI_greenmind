@@ -4,19 +4,19 @@ import shutil
 import atexit
 import requests
 import streamlit as st
-from langchain_community.vectorstores import FAISS
-from langchain_community.embeddings import HuggingFaceEmbeddings
 
 # ─────────────────────────────────────────────
 # Optional imports — only needed when building
 # vectorstore from scratch (not on Streamlit Cloud)
 # ─────────────────────────────────────────────
 try:
+    from langchain_community.vectorstores import FAISS
+    from langchain_community.embeddings import HuggingFaceEmbeddings
     from langchain_community.document_loaders import PyPDFLoader
     from langchain_text_splitters import RecursiveCharacterTextSplitter
-    PDF_LOADING_AVAILABLE = True
+    LANGCHAIN_AVAILABLE = True
 except ImportError:
-    PDF_LOADING_AVAILABLE = False
+    LANGCHAIN_AVAILABLE = False
 
 
 # ─────────────────────────────────────────────
@@ -88,7 +88,7 @@ def download_pdf_with_retry(
 
 
 def load_pdf_chunks(pdf_url: str, temp_filename: str = "temp.pdf"):
-    if not PDF_LOADING_AVAILABLE:
+    if not LANGCHAIN_AVAILABLE:
         raise RuntimeError("PDF loading not available in this environment.")
 
     success = download_pdf_with_retry(pdf_url, temp_filename)
@@ -167,34 +167,26 @@ def build_both_vectorstores(txt_file_1, txt_file_2):
     cache_path_1 = os.path.join(BASE_DIR, "vectorstore_cache", "Environmental_Policies")
     cache_path_2 = os.path.join(BASE_DIR, "vectorstore_cache", "Environmental_Effects")
 
-
-    print(f"DEBUG — BASE_DIR     : {BASE_DIR}")
-    print(f"DEBUG — cache_path_1 : {cache_path_1}")
-    print(f"DEBUG — exists_1     : {os.path.exists(cache_path_1)}")
-    print(f"DEBUG — exists_2     : {os.path.exists(cache_path_2)}")
-
-    embeddings = HuggingFaceEmbeddings(
-        model_name="sentence-transformers/multi-qa-MiniLM-L6-cos-v1"
-    )
-
-    # ✅ Load from cache if exists — instant
+    # ✅ Load from cache — no langchain_community needed at import time
     if os.path.exists(cache_path_1) and os.path.exists(cache_path_2):
-        vectordb_1 = FAISS.load_local(
-            cache_path_1, embeddings,
-            allow_dangerous_deserialization=True
+        from langchain_community.vectorstores import FAISS
+        from langchain_community.embeddings import HuggingFaceEmbeddings
+        embeddings = HuggingFaceEmbeddings(
+            model_name="sentence-transformers/multi-qa-MiniLM-L6-cos-v1"
         )
-        vectordb_2 = FAISS.load_local(
-            cache_path_2, embeddings,
-            allow_dangerous_deserialization=True
-        )
-        st.success("🌿 GreenMind is ready!")
+        vectordb_1 = FAISS.load_local(cache_path_1, embeddings, allow_dangerous_deserialization=True)
+        vectordb_2 = FAISS.load_local(cache_path_2, embeddings, allow_dangerous_deserialization=True)
+        st.success("🌿 Hi, how can I help you?")
         return vectordb_1, vectordb_2
 
-    # Fallback — build from scratch if cache missing
-    urls_1 = load_urls_from_file(txt_file_1)
-    urls_2 = load_urls_from_file(txt_file_2)
+    # Fallback
+    if not LANGCHAIN_AVAILABLE:
+        st.error("❌ Cannot build vectorstore — langchain_community not available.")
+        st.stop()
+
+    urls_1     = load_urls_from_file(txt_file_1)
+    urls_2     = load_urls_from_file(txt_file_2)
     vectordb_1 = build_vectorstore_from_urls(urls_1, "Environmental_Policies")
     vectordb_2 = build_vectorstore_from_urls(urls_2, "Environmental_Effects")
-
-    st.success("🌿 GreenMind is ready!")
+    st.success("🌿 Hi, how can I help you?")
     return vectordb_1, vectordb_2
