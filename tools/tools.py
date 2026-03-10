@@ -1,48 +1,40 @@
 import requests
 import streamlit as st
-from pydantic import BaseModel, Field
-try:
-    from ddgs import DDGS
-except ImportError:
-    from duckduckgo_search import DDGS
-
-
-# Schema for air quality tool
-class AirQualityInput(BaseModel):
-    location: str = Field(
-        description="City, state or country name. Example: 'Delhi', 'New York', 'Germany'"
-    )
-
-# Schema for climate projection tool
-class ClimateInput(BaseModel):
-    location: str = Field(
-        description="City, state or country name. Example: 'Mumbai', 'Brazil', 'Kenya'"
-    )
-
-# Schema for biodiversity tool
-class BiodiversityInput(BaseModel):
-    query: str = Field(
-        description="ISO 2-letter country code, optionally with year range. Examples: 'IN', 'BR,2015,2024', 'US,2000,2024'"
-    )
-
-# Schema for search tool
-class SearchInput(BaseModel):
-    query: str = Field(
-        description="Search query for current environmental news and policies"
-    )
-
-# Schema for RAG tools
-class RAGInput(BaseModel):
-    query: str = Field(
-        description="Question to search in environmental documents"
-    )
-
 
 
 
 def build_tools(vectordb_1: FAISS, vectordb_2: FAISS):
     from langchain_core.tools import StructuredTool        # ← move here
     from langchain_community.vectorstores import FAISS
+    from pydantic import BaseModel, Field
+    try:
+        from ddgs import DDGS
+    except ImportError:
+        from duckduckgo_search import DDGS
+
+    # Schema for air quality tool
+    class AirQualityInput(BaseModel):
+        location: str = Field(
+            description="City, state or country name. Example: 'Delhi', 'New York', 'Germany'"
+        )
+    class ClimateInput(BaseModel):
+        location: str = Field(
+            description="City, state or country name. Example: 'Mumbai', 'Brazil', 'Kenya'"
+        )
+    class BiodiversityInput(BaseModel):
+        query: str = Field(
+            description="ISO 2-letter country code, optionally with year range. Examples: 'IN', 'BR,2015,2024', 'US,2000,2024'"
+        )
+    class SearchInput(BaseModel):
+        query: str = Field(
+            description="Search query for current environmental news and policies"
+        )
+    class RAGInput(BaseModel):
+        query: str = Field(
+            description="Question to search in environmental documents"
+        )
+        
+
     def get_coordinates(location: str) -> tuple[float, float]:
         """Convert any location name to latitude/longitude."""
         url = "https://geocoding-api.open-meteo.com/v1/search"

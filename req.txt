@@ -10,4 +10,4 @@ requests
 duckduckgo_search
 pypdf
 python-dotenv
-pydantic
+pydantic>=2.0
