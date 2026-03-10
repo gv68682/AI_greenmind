@@ -1,7 +1,5 @@
 import requests
 import streamlit as st
-
-from langchain.tools import tool
 from langchain_core.tools import StructuredTool
 from langchain_community.vectorstores import FAISS
 from pydantic import BaseModel, Field
