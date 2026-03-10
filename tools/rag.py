@@ -154,6 +154,12 @@ def build_both_vectorstores(txt_file_1, txt_file_2):
     cache_path_1 = os.path.join(BASE_DIR, "vectorstore_cache", "Environmental_Policies")
     cache_path_2 = os.path.join(BASE_DIR, "vectorstore_cache", "Environmental_Effects")
 
+
+    print(f"DEBUG — BASE_DIR     : {BASE_DIR}")
+    print(f"DEBUG — cache_path_1 : {cache_path_1}")
+    print(f"DEBUG — exists_1     : {os.path.exists(cache_path_1)}")
+    print(f"DEBUG — exists_2     : {os.path.exists(cache_path_2)}")
+
     embeddings = HuggingFaceEmbeddings(
         model_name="sentence-transformers/multi-qa-MiniLM-L6-cos-v1"
     )
