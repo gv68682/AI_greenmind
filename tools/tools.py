@@ -37,6 +37,9 @@ def build_tools(vectordb_1, vectordb_2):
 
     def get_coordinates(location: str) -> tuple[float, float]:
         """Convert any location name to latitude/longitude."""
+        # Clean location — strip state/country suffixes like ", CA, USA"
+        location = location.split(",")[0].strip()
+        
         url = "https://geocoding-api.open-meteo.com/v1/search"
         params = {"name": location, "count": 1, "language": "en", "format": "json"}
         res = requests.get(url, params=params).json()
@@ -124,8 +127,10 @@ def build_tools(vectordb_1, vectordb_2):
     # Air Quality Tool
     # ─────────────────────────────────────────
     def _air_quality(location: str) -> str:
-        import requests
-        lat, lon = get_coordinates(location)
+        try:    
+            lat, lon = get_coordinates(location)
+        except ValueError:
+            return f"❌ Location '{location}' not found. Please try a different location name."
         url = "https://air-quality-api.open-meteo.com/v1/air-quality"
         params = {
             "latitude":      lat,
@@ -245,6 +250,11 @@ def build_tools(vectordb_1, vectordb_2):
             }
             return requests.get(url, params=params).json()
 
+        def remove_accents(text: str) -> str:
+                return ''.join(
+                    c for c in unicodedata.normalize('NFD', text)
+                    if unicodedata.category(c) != 'Mn'
+                )
         # First attempt with original location
         try:
             lat, lon = get_coordinates(location)
@@ -274,12 +284,6 @@ def build_tools(vectordb_1, vectordb_2):
                             capital = title.split()[0].strip("–—-,")
                             print(f"DEBUG CLIMATE — capital candidate: {capital}")
                             break
-
-                def remove_accents(text: str) -> str:
-                    return ''.join(
-                        c for c in unicodedata.normalize('NFD', text)
-                        if unicodedata.category(c) != 'Mn'
-                    )
 
                 if capital:
                     try:
