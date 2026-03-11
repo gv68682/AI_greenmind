@@ -1,6 +1,7 @@
 import requests
 import streamlit as st
 import unicodedata
+import re
 
 
 def build_tools(vectordb_1, vectordb_2):
@@ -244,7 +245,7 @@ def build_tools(vectordb_1, vectordb_2):
                 "longitude":  lon,
                 "start_date": "2024-01-01",
                 "end_date":   "2050-12-31",
-                "models":     "CMIP6",
+                "models":     "MRI_AGCM3_2_S",
                 "daily":      ["temperature_2m_max", "temperature_2m_min",
                             "precipitation_sum"]
             }
@@ -269,19 +270,31 @@ def build_tools(vectordb_1, vectordb_2):
         if not times or res.get("error"):
             print(f"DEBUG CLIMATE — No data for '{location}', searching for capital...")
             try:
-                from ddgs import DDGS
                 capital = None
                 with DDGS() as ddgs:
-                    results = list(ddgs.text(f"what is the capital city of {location}", max_results=3))
+                    results = list(ddgs.text(f"capital city of {location} is", max_results=5))
                     for r in results:
                         snippet = r.get("body", "")
                         title   = r.get("title", "")
                         print(f"DEBUG CLIMATE — title  : {title}")
                         print(f"DEBUG CLIMATE — snippet: {snippet[:150]}")
-                        # Extract capital from title like "Brasilia - Capital of Brazil"
+                        
+                        # Skip generic/plural titles
+                        if title.lower().startswith("capitals"):
+                            continue
+                            
                         if "capital" in title.lower() or "capital" in snippet.lower():
-                            # Take first word of title as capital candidate
-                            capital = title.split()[0].strip("–—-,")
+                            # Extract city name — look for pattern "X is the capital"
+                            match = re.search(
+                                r'([A-Z][a-záéíóúãõâêô]+(?:\s[A-Z][a-záéíóúãõâêô]+)?)'
+                                r'\s+is\s+the\s+capital',
+                                snippet
+                            )
+                            if match:
+                                capital = match.group(1)
+                            else:
+                                capital = title.split()[0].strip("–—-,")
+                            
                             print(f"DEBUG CLIMATE — capital candidate: {capital}")
                             break
 
@@ -290,9 +303,14 @@ def build_tools(vectordb_1, vectordb_2):
                         capital_clean = remove_accents(capital)
                         print(f"DEBUG CLIMATE — capital clean: {capital_clean}")
                         lat, lon = get_coordinates(capital_clean)
+                        print(f"DEBUG CLIMATE — capital coords: {lat}, {lon}") 
                         res   = fetch_climate(lat, lon)
+                        print(f"DEBUG CLIMATE — fetch result keys: {res.keys()}")
+                        print(f"DEBUG CLIMATE — fetch error : {res.get('error')}")
+                        print(f"DEBUG CLIMATE — fetch reason: {res.get('reason')}")
                         daily = res.get("daily", {})
                         times = daily.get("time", [])
+                        print(f"DEBUG CLIMATE — times count: {len(times)}")
                         if times:
                             print(f"DEBUG CLIMATE — Success with capital: {capital_clean}")
                     except Exception as e:
