@@ -80,8 +80,8 @@ def build_tools(vectordb_1, vectordb_2):
         results = vectordb_2.similarity_search(query, k=8)
 
         # ✅ debug prints here — inside the function
-        print(f"DEBUG RAG EFFECTS — query    : {query}")
-        print(f"DEBUG RAG EFFECTS — retrieved: {len(results)}")
+        # print(f"DEBUG RAG EFFECTS — query    : {query}")
+        # print(f"DEBUG RAG EFFECTS — retrieved: {len(results)}")
         for i, doc in enumerate(results):
             print(f"  [{i}] {doc.page_content[:100]}")
 

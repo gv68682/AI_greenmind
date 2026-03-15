@@ -65,15 +65,15 @@ def extract_response(result: dict) -> str:
 
     last_message = messages[-1]
 
-    print("DEBUG — Last message type :", type(last_message))
-    print("DEBUG — Last message      :", last_message)
-    print("DEBUG — Has content attr  :", hasattr(last_message, "content"))
+    # print("DEBUG — Last message type :", type(last_message))
+    # print("DEBUG — Last message      :", last_message)
+    # print("DEBUG — Has content attr  :", hasattr(last_message, "content"))
 
     content = last_message.content if hasattr(last_message, "content") \
               else last_message.get("content", "")
 
-    print("DEBUG — Content type      :", type(content))
-    print("DEBUG — Content value     :", content)
+    # print("DEBUG — Content type      :", type(content))
+    # print("DEBUG — Content value     :", content)
 
     if isinstance(content, list):
         print("DEBUG — Content is LIST, items:")
@@ -94,8 +94,8 @@ def extract_response(result: dict) -> str:
     print("DEBUG — Final text :", final_text[:200] if final_text else "EMPTY")
 
     if not final_text.strip():
-        print("DEBUG — Full agent result:")
-        print(result)
+        #print("DEBUG — Full agent result:")
+        #print(result)
         return "⚠️ GreenMind received the data but could not formulate a response. Please try again."
 
     return final_text
@@ -185,7 +185,7 @@ if prompt := st.chat_input("Ask GreenMind about the environment..."):
                         "callbacks": [callback_handler]
                     }
                 )
-
+                #print(f"DEBUG — tools used: {callback_handler.tools_used}")
                 messages = result.get("messages", [])
 
                 tool_was_called = any(
@@ -194,6 +194,19 @@ if prompt := st.chat_input("Ask GreenMind about the environment..."):
                 )
 
                 candidate = extract_response(result)
+
+                # Check if it's a valid out-of-scope response
+                out_of_scope_phrases = [
+                    "GreenMind focuses on environmental health",
+                    "GreenMind is dedicated solely to environmental topics",
+                    "I'd recommend checking weather.com"
+                ]
+
+                is_out_of_scope = any(phrase in candidate for phrase in out_of_scope_phrases)
+
+                if is_out_of_scope:
+                    response = candidate
+                    break
 
                 if tool_was_called and candidate.strip():
                     response = candidate
