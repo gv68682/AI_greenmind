@@ -127,12 +127,6 @@ placeholder.empty()
 st.success("✅ GreenMind is ready!")
 
 # ─────────────────────────────────────────────
-# 6. Initialize Callback Handler           ✅
-#    BEFORE session state & chat history
-# ─────────────────────────────────────────────
-callback_handler = GreenMindCallbackHandler()
-
-# ─────────────────────────────────────────────
 # 7. Session State
 # ─────────────────────────────────────────────
 if "messages" not in st.session_state:
@@ -140,6 +134,22 @@ if "messages" not in st.session_state:
 
 if "is_first_message" not in st.session_state:
     st.session_state.is_first_message = True
+
+
+# ─────────────────────────────────────────────
+# 6. Initialize Callback Handler           ✅
+#    BEFORE session state & chat history
+# ─────────────────────────────────────────────
+callback_handler = GreenMindCallbackHandler()
+
+# ─────────────────────────────────────────────
+# Display chat history
+# ─────────────────────────────────────────────
+for message in st.session_state.messages:
+    avatar = "👤" if message["role"] == "user" else "🌿"
+    with st.chat_message(message["role"], avatar=avatar):
+        st.markdown(message["content"])
+
 
 # ─────────────────────────────────────────────
 # 9. Chat Input + Agent Invoke
@@ -159,71 +169,78 @@ if prompt := st.chat_input("Ask GreenMind about the environment..."):
 
             callback_handler.reset()
 
-             # ─────────────────────────────────
+            # ─────────────────────────────────
             # ✅ Tell agent if its first message
             # or a follow-up question
             # ─────────────────────────────────
+            greeting_words = ["hi", "hello", "hey", "good morning", "good evening", "howdy", "Hi!", "HI","Hello!", "Hello"]
+
             if st.session_state.is_first_message:
                 full_prompt = prompt
-                st.session_state.is_first_message = False
+                if prompt.strip().lower() not in greeting_words:
+                    st.session_state.is_first_message = False
             else:
                 full_prompt = (
                     f"[FOLLOW-UP QUESTION — DO NOT GREET — "
                     f"answer directly]: {prompt}"
                 )
 
-
             MAX_RETRIES = 3
             response    = None
 
-            for attempt in range(1, MAX_RETRIES + 1):
-                from langchain_core.messages import ToolMessage
-                result = agent_executor.invoke(
-                    {"messages": [("user", full_prompt)]},
-                    config={
-                        "recursion_limit": 25,
-                        "callbacks": [callback_handler]
-                    }
-                )
-                #print(f"DEBUG — tools used: {callback_handler.tools_used}")
-                messages = result.get("messages", [])
+            if prompt.strip().lower() in greeting_words:
+                response = "Hello! Ask me anything about pollution, climate, biodiversity, or environmental policies!"
 
-                tool_was_called = any(
-                    isinstance(msg, ToolMessage)
-                    for msg in messages
-                )
+            else:
+                for attempt in range(1, MAX_RETRIES + 1):
+                    from langchain_core.messages import ToolMessage
+                    result = agent_executor.invoke(
+                        {"messages": [("user", full_prompt)]},
+                        config={
+                            "recursion_limit": 25,
+                            "callbacks": [callback_handler]
+                        }
+                    )
+                    messages = result.get("messages", [])
 
-                candidate = extract_response(result)
+                    tool_was_called = any(
+                        isinstance(msg, ToolMessage)
+                        for msg in messages
+                    )
 
-                # Check if it's a valid out-of-scope response
-                out_of_scope_phrases = [
-                    "GreenMind focuses on environmental health",
-                    "GreenMind is dedicated solely to environmental topics",
-                    "I'd recommend checking weather.com"
-                ]
+                    candidate = extract_response(result)
+                    candidate = candidate.strip().lstrip("🌿").strip()
 
-                is_out_of_scope = any(phrase in candidate for phrase in out_of_scope_phrases)
+                    # Check if it's a valid out-of-scope response
+                    out_of_scope_phrases = [
+                        "GreenMind focuses on environmental health",
+                        "GreenMind is dedicated solely to environmental topics",
+                        "I'd recommend checking weather.com"
+                    ]
 
-                if is_out_of_scope:
-                    response = candidate
-                    break
+                    is_out_of_scope = any(phrase in candidate for phrase in out_of_scope_phrases)
 
-                if tool_was_called and candidate.strip():
-                    response = candidate
-                    break
-                else:
-                    print(f"DEBUG — Attempt {attempt}: No tool called, retrying...")
-                    callback_handler.reset()
-                    continue
+                    if is_out_of_scope:
+                        response = candidate
+                        break
 
-            if not response:
-                response = (
-                    "🌿 I don't have enough information to "
-                    "answer this accurately. Please try "
-                    "rephrasing your question or ask about "
-                    "a related environmental topic."
-                )
-            # Choose random quote and append to response
+                    if tool_was_called and candidate.strip():
+                        response = candidate
+                        break
+                    else:
+                        print(f"DEBUG — Attempt {attempt}: No tool called, retrying...")
+                        callback_handler.reset()
+                        continue
+
+                if not response:
+                    response = (
+                        "I don't have enough information to "
+                        "answer this accurately. Please try "
+                        "rephrasing your question or ask about "
+                        "a related environmental topic."
+                    )
+
+            # ← outside both if/else
             random_quote = random.choice(quotes)
             response = response + f"\n\n🌿 *{random_quote}*"
             log_interaction(
@@ -232,7 +249,7 @@ if prompt := st.chat_input("Ask GreenMind about the environment..."):
                 tools_used=callback_handler.tools_used,
                 tool_logs=callback_handler.tool_logs
             )
-        
+
         st.markdown(response)
 
     st.session_state.messages.append({"role": "assistant", "content": response})
