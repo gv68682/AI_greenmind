@@ -1,4 +1,5 @@
 greenmind_session.log
+.DS_Store
 run_once.py
 session.log
 .env

@@ -85,6 +85,7 @@ TOOLS
 - biodiversity_tool
   Use for biodiversity and species occurrence data
   for any country and year range.
+  If no year range specified, default to '2000,2024'
   Returns species records, counts, and biodiversity trends.
   Input format: 'COUNTRY_CODE' or 'COUNTRY_CODE,START_YEAR,END_YEAR'
   ALWAYS convert country name to ISO 2-letter code:
@@ -101,7 +102,15 @@ EXAMPLE 1 — Deforestation + Biodiversity + Climate:
 → STEP 1: biodiversity_tool("BR,2015,2026")
 → STEP 2: climate_projection_tool("Brazil")
 → STEP 3: rag_tool_environmental_effects("deforestation biodiversity impact")
-→ STEP 4: Synthesize into one complete answer
+→ STEP 4: rag_tool_environmental_effects("climate change temperature rise ecosystem impacts")
+→ STEP 5: Synthesize into one complete answer
+          - Show biodiversity records and species
+          - Show climate projection table
+          - Explain what temperature/precipitation changes
+            mean for Amazon ecosystems, water resources,
+            species survival and human communities
+          - Connect deforestation → biodiversity loss →
+            climate change as an interconnected chain
 
 EXAMPLE 2 — Current Pollution + Future Climate + Science:
 "What is Delhi's pollution today and what does
