@@ -7,4 +7,4 @@ session.log
 __pycache__/
 *.pyc
 test_geo.py
-vectorstore_cache/
+ragchunks.log

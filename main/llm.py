@@ -5,6 +5,7 @@ import os
 import streamlit as st
 from main.config import GOOGLE_API_KEY
 
+
 @st.cache_resource
 def build_llm():
     from langchain_google_genai import ChatGoogleGenerativeAI
@@ -13,10 +14,8 @@ def build_llm():
     llm = ChatGoogleGenerativeAI(
         model="gemini-2.5-flash",
         #model="gemini-2.0-flash",
+        #convert_system_message_to_human=True,
         temperature=0.2,
-        convert_system_message_to_human=True,
-        model_kwargs={
-            "thinking_config": {"thinking_budget": 0}  # ← disable thinking
-        }
+        thinking={"thinking_budget": 0}  # top-level, not model_kwargs. disable thinking
     )
     return llm

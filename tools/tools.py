@@ -54,16 +54,50 @@ def build_tools(vectordb_1, vectordb_2):
     # RAG Tool 1
     # ─────────────────────────────────────────
     def _rag_policies(query: str) -> str:
-        results = vectordb_1.similarity_search(query, k=8)
+        # 🔧 1. Query expansion
+        enhanced_query = f"""
+           {query}
+            Focus on:
+            - environmental policies
+            - laws
+            - treaties
+            - agreements
+            - regulatory frameworks
+            - government actions
+         """
+        # 🔧 2. Increase retrieval depth
+        results = vectordb_1.similarity_search(enhanced_query, k=8)
         if not results:
             return "No relevant information found in environmental policy documents."
-        context = "\n\n".join([doc.page_content for doc in results])
-        return (
-            f"RETRIEVED SCIENTIFIC EVIDENCE [ANSWER ONLY FROM THIS]:\n\n"
-            f"{context}\n\n"
-            f"INSTRUCTION: You MUST base your answer entirely on the above "
-            f"retrieved content. Do NOT say you lack information."
-        )
+        context_blocks = []
+        for i, doc in enumerate(results):
+            meta = doc.metadata
+            source  = meta.get("source_type", "UNKNOWN")
+            page    = (meta.get("page", 0) or 0) + 1
+            chapter = meta.get("chapter", "unknown")
+
+            block = (
+                f"[Source: {source} | Page: {page} | Section: {chapter}]\n"
+                f"{doc.page_content}"
+            )
+            context_blocks.append(block)
+            print(f"[{i}] {source} p{page} → {doc.page_content[:50]}")
+
+        context = "\n\n".join(context_blocks)
+
+        # 🔧 4. Hard control of behavior
+        return f"""
+                    RETRIEVED POLICY EVIDENCE::
+                    {context}
+                    QUERY:
+                    {query}
+                    INSTRUCTIONS:
+                    - Answer ONLY using the above content
+                    - Do NOT use outside knowledge
+                    - Cite source + page for every claim
+                    - Include specific policy names, article numbers, or commitments where present
+                    - If content is insufficient, say so explicitly — do NOT fill gaps
+                """
 
     rag_tool_environmental_policies = StructuredTool.from_function(
         func=_rag_policies,
@@ -77,24 +111,40 @@ def build_tools(vectordb_1, vectordb_2):
     # RAG Tool 2
     # ─────────────────────────────────────────
     def _rag_effects(query: str) -> str:
-        results = vectordb_2.similarity_search(query, k=8)
+            enhanced_query = f"""
+                {query}
+                Focus on: environmental impacts, health effects,
+                ecosystem damage, scientific findings, causes and consequences.
+            """
+            results = vectordb_2.similarity_search(enhanced_query, k=6)
+            if not results:
+                return "No relevant information found in environmental effects documents."
+            context_blocks = []
+            for i, doc in enumerate(results):
+                meta = doc.metadata
+                source  = meta.get("source_type", "UNKNOWN")
+                page    = (meta.get("page", 0) or 0) + 1
+                chapter = meta.get("chapter", "unknown")
+                block = (
+                    f"[Source: {source} | Page: {page} | Section: {chapter}]\n"
+                    f"{doc.page_content}"
+                )
+                context_blocks.append(block)
+                print(f"[{i}] {source} p{page} → {doc.page_content[:50]}")
 
-        # ✅ debug prints here — inside the function
-        # print(f"DEBUG RAG EFFECTS — query    : {query}")
-        # print(f"DEBUG RAG EFFECTS — retrieved: {len(results)}")
-        for i, doc in enumerate(results):
-            print(f"  [{i}] {doc.page_content[:100]}")
+            context = "\n\n".join(context_blocks)
 
-        if not results:
-            return "No relevant information found in environmental effects documents."
-        context = "\n\n".join([doc.page_content for doc in results])
-        return (
-            f"RETRIEVED SCIENTIFIC EVIDENCE [ANSWER ONLY FROM THIS]:\n\n"
-            f"{context}\n\n"
-            f"INSTRUCTION: You MUST base your answer entirely on the above "
-            f"retrieved content. Do NOT say you lack information."
-        )
-    
+            return f"""
+                    RETRIEVED SCIENTIFIC EVIDENCE:
+                    {context}
+                    QUERY: {query}
+                    INSTRUCTIONS:
+                    - Answer ONLY using the above content
+                    - Do NOT use outside knowledge
+                    - Cite source + page for every claim
+                    - Include specific statistics and figures where present
+                    - If content is insufficient, say so explicitly
+                """
 
     rag_tool_environmental_effects = StructuredTool.from_function(
         func=_rag_effects,
@@ -200,6 +250,11 @@ def build_tools(vectordb_1, vectordb_2):
                 f"PM2.5:{data['pm25']}µg/m³ | PM10:{data['pm10']}µg/m³ | "
                 f"NO2:{data['no2']}µg/m³ | OZONE:{data['ozone']}µg/m³\n"
             )
+            # Filter out days where all pollutants are None
+            forecast_lines = [
+                line for line in forecast_lines
+                if "None" not in line
+            ]
 
         # ─────────────────────────────────────────
         # ✅ KEY FIX: Label data as MANDATORY
@@ -341,9 +396,11 @@ def build_tools(vectordb_1, vectordb_2):
         if not snapshots:
             return f"❌ Could not extract yearly snapshots for {location}"
 
-        result = f"🌍 Climate Projections — {location} (CMIP6)\n"
+        result = f"🌍 Climate Projections — {location} (CMIP6)\n\n"
+        result += "| Year | Max Temp (°C) | Min Temp (°C) | Precipitation (mm) |\n"
+        result += "|------|--------------|--------------|-------------------|\n"
         for year, data in snapshots.items():
-            result += f"📅 {year}: Max {data['temp_max']}°C | Min {data['temp_min']}°C | Precip {data['precip']}mm\n"
+            result += f"| {year} | {data['temp_max']} | {data['temp_min']} | {data['precip']} |\n"
 
         return result
 
@@ -379,10 +436,12 @@ def build_tools(vectordb_1, vectordb_2):
         species_text = "\n".join(species_list) if species_list else "No species data found."
         return f"""
             🌿 Biodiversity — {country_code} ({start_year}–{end_year})
-            Total Records : {count:,}
-            Sample Species:
+            Total Occurrence Records : {count:,}
+            ⚠️ NOTE: These are raw observation records, NOT threatened species assessments.
+            Sample Observed Species (not ranked by risk):
             {species_text}
-        """
+            For at-risk species analysis, consult rag_tool_environmental_effects.
+         """
 
     biodiversity_tool = StructuredTool.from_function(
         func=_biodiversity,
