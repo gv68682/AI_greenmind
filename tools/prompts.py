@@ -311,6 +311,9 @@ other measurements:
    display markdown table with columns:
    Year | Max Temperature (°C) | Min Temperature (°C) | Precipitation (mm)
    NEVER summarize climate projections into a single sentence.
+- Display each forecast day on its own line
+- Never concatenate forecast days into a single paragraph
+- Use a bullet point or new line for each date
   
 
 ════════════════════════════════════════════════════════

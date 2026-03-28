@@ -192,6 +192,8 @@ if prompt := st.chat_input("Ask GreenMind about the environment..."):
                         )
                         break  # success — exit retry loop
                     except Exception as e:
+                        print(f"DEBUG — Exception type: {type(e).__name__}")
+                        print(f"DEBUG — Exception message: {str(e)}")
                         if "429" in str(e) or "RESOURCE_EXHAUSTED" in str(e):
                             error_message = "⚠️ We're a bit busy right now. Please try again shortly."
                         else:

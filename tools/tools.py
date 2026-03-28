@@ -235,7 +235,7 @@ def build_tools(vectordb_1, vectordb_2):
                     "ozone": ozone_hourly[i] if i < len(ozone_hourly) else "N/A",
                 }
 
-        forecast_lines = ""
+        forecast_lines = []
         for date, data in daily_forecast.items():
             day_aqi = data["aqi"] or 0
             if   day_aqi <= 50:  day_cat = "Good 🟢"
@@ -245,17 +245,14 @@ def build_tools(vectordb_1, vectordb_2):
             elif day_aqi <= 300: day_cat = "Very Unhealthy 🟣"
             else:                day_cat = "Hazardous ⚫"
 
-            forecast_lines += (
+            forecast_lines.append(
                 f"DATE:{date} | AQI:{day_aqi} | CATEGORY:{day_cat} | "
                 f"PM2.5:{data['pm25']}µg/m³ | PM10:{data['pm10']}µg/m³ | "
-                f"NO2:{data['no2']}µg/m³ | OZONE:{data['ozone']}µg/m³\n"
+                f"NO2:{data['no2']}µg/m³ | OZONE:{data['ozone']}µg/m³"
             )
-            # Filter out days where all pollutants are None
-            forecast_lines = [
-                line for line in forecast_lines
-                if "None" not in line
-            ]
-
+        # Filter out days where all pollutants are None
+        forecast_lines = [line for line in forecast_lines if "None" not in line]
+        forecast_text = "\n".join(forecast_lines)
         # ─────────────────────────────────────────
         # ✅ KEY FIX: Label data as MANDATORY
         # so Gemini cannot summarize or skip it
@@ -273,7 +270,7 @@ def build_tools(vectordb_1, vectordb_2):
             CO           : {curr.get('carbon_monoxide')} µg/m³
 
             7_DAY_FORECAST_DATA [MANDATORY - DISPLAY ALL 7 DAYS]:
-            {forecast_lines}
+            {forecast_text}
             INSTRUCTION: You MUST display every single day
             of the 7_DAY_FORECAST_DATA above in your response.
             Do NOT summarize. Do NOT say forecast is available.
@@ -415,7 +412,6 @@ def build_tools(vectordb_1, vectordb_2):
     # Biodiversity Tool
     # ─────────────────────────────────────────
     def _biodiversity(query: str) -> str:
-        import requests
         parts        = [p.strip() for p in query.split(",")]
         country_code = parts[0].upper()
         start_year   = parts[1] if len(parts) > 1 else "2020"
